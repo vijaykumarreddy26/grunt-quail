@@ -27,7 +27,7 @@
     "test": "grunt test"
   },
   "dependencies": {
-    "grunt-lib-phantomjs": "https://github.com/vijaykumarreddy26/grunt-lib-phantomjs",
+    "grunt-lib-phantomjs": "https://github.com/vijaykumarreddy26/grunt-lib-phantomjs.git",
     "quail": "~2.1.1",
     "jquery": "~2.1.0-beta3"
   },
