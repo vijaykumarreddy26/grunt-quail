@@ -28,15 +28,8 @@ module.exports = function(grunt) {
     phantomjs.halt();
   });
 
-  phantomjs.on('fail.load', function(url) {
-    phantomjs.halt();
-    grunt.warn('PhantomJS unable to load URL.');
-  });
 
-  phantomjs.on('fail.timeout', function() {
-    phantomjs.halt();
-    grunt.warn('PhantomJS timed out.');
-  });
+
 
   grunt.registerMultiTask('quail', 'Check HTML for accessibility.', function() {
     var errorCount = 0;
@@ -62,6 +55,15 @@ module.exports = function(grunt) {
     var done = this.async();
     grunt.util.async.forEachSeries(urls, function(url, next) {
       grunt.log.writeln(url);
+          phantomjs.on('fail.timeout', function() {
+            grunt.log.error( url + ' has timedout');
+            next();
+          });
+          phantomjs.on('fail.load', function(url) {
+            grunt.log.error( url + '  not loaded properly');
+            next();
+          });
+
       grunt.event.emit('quail.spawn', url);
       phantomjs.spawn(url, {
         // Additional PhantomJS options.
