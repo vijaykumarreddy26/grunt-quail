@@ -6,7 +6,6 @@
  * Licensed under the MIT license.
  */
 
-
 module.exports = function(grunt) {
   'use strict';
   var phantomjs = require('grunt-lib-phantomjs').init(grunt);
@@ -19,7 +18,7 @@ module.exports = function(grunt) {
   phantomjs.on('quail.error', function(msg) {
     grunt.log.error(msg);
   });
-  
+
   phantomjs.on('quail.fail', function(msg) {
     grunt.log.error(msg);
   });
@@ -29,13 +28,11 @@ module.exports = function(grunt) {
   });
 
 
-
-
   grunt.registerMultiTask('quail', 'Check HTML for accessibility.', function() {
     var errorCount = 0;
     var options = this.options({
       // Default PhantomJS timeout.
-      timeout: 5000,
+      timeout: 3000,
       // QUnit-PhantomJS bridge file to be injected.
       inject: [
         asset('node_modules/jquery/dist/jquery.js'),
@@ -49,43 +46,53 @@ module.exports = function(grunt) {
       quailPath : asset('node_modules/quail/dist')
     });
     var urls = options.urls.concat(this.filesSrc);
-    
+
 
     // This task is async.
     var done = this.async();
+    var count =0;
     grunt.util.async.forEachSeries(urls, function(url, next) {
-      grunt.log.writeln(url);
-          phantomjs.on('fail.timeout', function() {
-            grunt.log.error( url + ' has timedout');
-            next();
-          });
-          phantomjs.on('fail.load', function(url) {
-            grunt.log.error( url + '  not loaded properly');
-            next();
-          });
+          grunt.log.writeln(url);
+          count++;
+          grunt.event.emit('quail.spawn', url);
+          var spawn =  phantomjs.spawn(url, {
+            // Additional PhantomJS options.
+            options: options,
+            // Complete the task when done.
+            done: function(err) {
+              if(spawn.pid){
+                spawn.kill("SIGTERM");
+              }
+              next();
 
-      grunt.event.emit('quail.spawn', url);
-      phantomjs.spawn(url, {
-        // Additional PhantomJS options.
-        options: options,
-        // Complete the task when done.
-        done: function(err) {
-          if (err) {
-            done();
-          }
-          else {
-            next();
-          }
-        }
-      });
-    },
-    // All tests have been run.
-    function() {
-      
-        grunt.log.ok('Accessibility testing complete');
-      // All done!
-      done();
-    });
+            },
+            failTimeout : function(ul){
+              grunt.log.error( url + '  timed out');
+              if(spawn.pid){
+                spawn.kill("SIGTERM");
+              }
+
+              next();
+
+
+            },
+            failLoad : function(url) {
+              grunt.log.error( url + '  not loaded properly');
+              if(spawn.pid){
+                spawn.kill("SIGTERM");
+              }
+              next();
+            }
+          });
+        },
+        // All tests have been run.
+        function() {
+          grunt.log.ok('Accessibility testing complete');
+          // All done!
+          done();
+        });
 
   });
 };
+
+

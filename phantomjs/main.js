@@ -38,13 +38,17 @@ sendMessage('private', 'version', phantom.version);
 setInterval(function() {
   if (new Date() - last > options.timeout) {
     sendMessage('fail.timeout');
-    phantom.exit();
+    if(options.failTimeout){
+      options.failTimeout();
+    }
+    phantom.exit(0);
+    page.close();
+    //phantom.exit(0);
   }
 }, 100);
 
 // Create a new page.
-var page = require('webpage').create();
-
+var page = require('webpage').create("");
 // Inject bridge script into client page.
 var injected;
 var inject = function() {
@@ -81,6 +85,7 @@ page.onAlert = function(str) {
   } catch(err) {
     sendMessage('error.invalidJSON', str);
   }
+
 };
 
 // Relay console logging messages.
@@ -107,6 +112,7 @@ page.onError = function(msg, trace) {
 page.onInitialized = function() {
   sendMessage('onInitialized');
   inject();
+
 };
 
 // Run when the page has finished loading.
@@ -120,7 +126,7 @@ page.onLoadFinished = function(status) {
   if (status !== 'success') {
     // File loading failure.
     sendMessage('fail.load', url);
-    phantom.exit();
+    phantom.exit(0);
   }
 };
 
