@@ -14,7 +14,7 @@ function sendMessage() {
 
 var options = window.gruntQuailOptions;
 if(typeof options.accessibilityTests === 'undefined' &&
-		typeof options.accessibilityGuideline === 'undefined') {
+	typeof options.accessibilityGuideline === 'undefined') {
 	sendMessage('quail.error', 'No accessibility tests defined');
 }
 
@@ -28,13 +28,25 @@ var quailOptions = {
 		sendMessage('quail.done');
 	}
 };
+var jayquery = jQuery.noConflict( true );
 
 var context = (typeof options.context !== 'undefined') ? options.context : '*:first';
+var counter = 0;
+var timer = setTimeout(
+	function(){
+		if(jayquery(context).length) {
+			clearTimeout(timer);
+			jayquery(context).quail(quailOptions);
+		}
+		else {
+			if(counter >= 100){
+				clearTimeout(timer);
+				sendMessage('quail.error', 'Could not find page context "' + context + '".');
+				sendMessage('quail.done');
+			}
 
-if(jQuery(context).length) {
-	jQuery(context).quail(quailOptions);
-}
-else {
-	sendMessage('quail.error', 'Could not find page context "' + context + '".');
-	sendMessage('quail.done');
-}
+		}
+
+	},100);
+
+
